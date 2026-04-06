@@ -11,7 +11,7 @@ const errorHandler = (err, _req, res, _next) => {
     if (err instanceof zod_1.ZodError) {
         res.status(400).json({
             message: "Validation failed",
-            details: err.flatten()
+            details: err.flatten(),
         });
         return;
     }
@@ -19,7 +19,10 @@ const errorHandler = (err, _req, res, _next) => {
         res.status(err.statusCode).json({ message: err.message });
         return;
     }
-    if (typeof err === "object" && err !== null && "statusCode" in err && "message" in err) {
+    if (typeof err === "object" &&
+        err !== null &&
+        "statusCode" in err &&
+        "message" in err) {
         const e = err;
         res.status(e.statusCode).json({ message: e.message, details: e.details });
         return;

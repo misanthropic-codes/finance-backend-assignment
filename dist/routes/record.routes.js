@@ -10,18 +10,22 @@ const record_schemas_1 = require("../schemas/record.schemas");
 exports.recordRouter = (0, express_1.Router)();
 exports.recordRouter.get("/", (0, auth_1.authorize)(client_1.Role.VIEWER, client_1.Role.ANALYST, client_1.Role.ADMIN), (0, validate_1.validate)(record_schemas_1.listRecordsSchema), async (req, res, next) => {
     try {
-        const { type, category, startDate, endDate, page, pageSize } = req.query;
+        const { type, category, startDate, endDate, page: rawPage, pageSize: rawPageSize, } = req.query;
+        const page = Number(rawPage ?? "1");
+        const pageSize = Number(rawPageSize ?? "20");
         const where = {
             ...(type ? { type } : {}),
-            ...(category ? { category: { contains: category, mode: "insensitive" } } : {}),
-            ...((startDate || endDate)
+            ...(category
+                ? { category: { contains: category, mode: "insensitive" } }
+                : {}),
+            ...(startDate || endDate
                 ? {
                     date: {
                         ...(startDate ? { gte: new Date(startDate) } : {}),
-                        ...(endDate ? { lte: new Date(endDate) } : {})
-                    }
+                        ...(endDate ? { lte: new Date(endDate) } : {}),
+                    },
                 }
-                : {})
+                : {}),
         };
         const [total, records] = await prisma_1.prisma.$transaction([
             prisma_1.prisma.financeRecord.count({ where }),
@@ -32,10 +36,10 @@ exports.recordRouter.get("/", (0, auth_1.authorize)(client_1.Role.VIEWER, client
                 take: pageSize,
                 include: {
                     createdBy: {
-                        select: { id: true, name: true, email: true }
-                    }
-                }
-            })
+                        select: { id: true, name: true, email: true },
+                    },
+                },
+            }),
         ]);
         res.json({
             data: records,
@@ -43,8 +47,8 @@ exports.recordRouter.get("/", (0, auth_1.authorize)(client_1.Role.VIEWER, client
                 page,
                 pageSize,
                 total,
-                totalPages: Math.ceil(total / pageSize)
-            }
+                totalPages: Math.ceil(total / pageSize),
+            },
         });
     }
     catch (error) {
@@ -61,13 +65,13 @@ exports.recordRouter.post("/", (0, auth_1.authorize)(client_1.Role.ADMIN), (0, v
                 category,
                 date: new Date(date),
                 notes,
-                createdById: req.user.id
+                createdById: req.user.id,
             },
             include: {
                 createdBy: {
-                    select: { id: true, name: true, email: true }
-                }
-            }
+                    select: { id: true, name: true, email: true },
+                },
+            },
         });
         res.status(201).json({ data: record });
     }
@@ -83,8 +87,8 @@ exports.recordRouter.patch("/:recordId", (0, auth_1.authorize)(client_1.Role.ADM
             where: { id: recordId },
             data: {
                 ...updateData,
-                ...(updateData.date ? { date: new Date(updateData.date) } : {})
-            }
+                ...(updateData.date ? { date: new Date(updateData.date) } : {}),
+            },
         });
         res.json({ data: record });
     }

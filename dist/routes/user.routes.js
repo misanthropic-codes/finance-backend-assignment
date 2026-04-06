@@ -24,8 +24,8 @@ exports.userRouter.get("/", (0, auth_1.authorize)(client_1.Role.ADMIN), async (_
                 role: true,
                 status: true,
                 createdAt: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
         });
         res.json({ data: users });
     }
@@ -47,7 +47,7 @@ exports.userRouter.post("/", (0, auth_1.authorize)(client_1.Role.ADMIN), (0, val
                 email,
                 passwordHash,
                 role,
-                status
+                status,
             },
             select: {
                 id: true,
@@ -56,8 +56,8 @@ exports.userRouter.post("/", (0, auth_1.authorize)(client_1.Role.ADMIN), (0, val
                 role: true,
                 status: true,
                 createdAt: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
         });
         res.status(201).json({ data: user });
     }
@@ -78,8 +78,8 @@ exports.userRouter.patch("/:userId/role", (0, auth_1.authorize)(client_1.Role.AD
                 email: true,
                 role: true,
                 status: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
         });
         res.json({ data: updated });
     }
@@ -100,8 +100,8 @@ exports.userRouter.patch("/:userId/status", (0, auth_1.authorize)(client_1.Role.
                 email: true,
                 role: true,
                 status: true,
-                updatedAt: true
-            }
+                updatedAt: true,
+            },
         });
         res.json({ data: updated });
     }

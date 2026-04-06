@@ -54,6 +54,11 @@ npm run dev
 
 API base URL: `http://localhost:4000/api`
 
+Swagger docs:
+
+- UI: `http://localhost:4000/api/docs`
+- OpenAPI JSON: `http://localhost:4000/api/docs.json`
+
 ## Demo Users (Seeded)
 
 - Admin: `admin@example.com` / `Admin123!`
@@ -103,6 +108,15 @@ Returns:
 - month-wise trends
 - recent 10 activities
 
+## Swagger / OpenAPI
+
+This project includes OpenAPI 3.0 documentation and a Swagger UI:
+
+- `GET /api/docs` renders Swagger UI
+- `GET /api/docs.json` returns the OpenAPI specification
+
+The docs include auth, users, records, and dashboard endpoints with request/response schemas.
+
 ## Access Control Rules
 
 - Viewer: read records + dashboard summaries
@@ -125,6 +139,26 @@ Inactive users cannot access protected routes.
 npm run build
 npm test
 ```
+
+## Deployment (Render)
+
+This repository includes [render.yaml](render.yaml), so you can deploy directly as a Render Blueprint.
+
+1. Push this repository to GitHub.
+2. In Render, create a new Blueprint service from the repo.
+3. Set `JWT_SECRET` in Render (required).
+4. Set `PUBLIC_API_URL` to your deployed base URL, for example `https://your-service.onrender.com`.
+5. Deploy.
+
+Render uses:
+
+- Build: `npm ci && npm run prisma:generate && npm run build`
+- Start: `npm run prisma:migrate:deploy && npm start`
+
+After deployment:
+
+- API health: `https://your-service.onrender.com/api/health`
+- Swagger UI: `https://your-service.onrender.com/api/docs`
 
 RBAC integration coverage is implemented in tests/rbac.integration.test.ts and verifies Viewer, Analyst, and Admin access for:
 

@@ -19,7 +19,7 @@ const authenticate = async (req, _res, next) => {
         const decoded = jsonwebtoken_1.default.verify(token, config_1.config.JWT_SECRET);
         const user = await prisma_1.prisma.user.findUnique({
             where: { id: decoded.sub },
-            select: { id: true, role: true, status: true }
+            select: { id: true, role: true, status: true },
         });
         if (!user) {
             throw new errors_1.AppError("User no longer exists", 401);

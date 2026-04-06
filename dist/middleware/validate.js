@@ -6,19 +6,17 @@ const validate = (schema) => {
         const parsed = schema.safeParse({
             body: req.body,
             params: req.params,
-            query: req.query
+            query: req.query,
         });
         if (!parsed.success) {
             return next({
                 statusCode: 400,
                 message: "Validation failed",
-                details: parsed.error.flatten()
+                details: parsed.error.flatten(),
             });
         }
-        const data = parsed.data;
-        req.body = data.body;
-        req.params = data.params;
-        req.query = data.query;
+        // Keep middleware side-effect free: validate only, do not mutate request internals.
+        // Express 5 exposes req.query with a getter, so reassignment can throw at runtime.
         return next();
     };
 };

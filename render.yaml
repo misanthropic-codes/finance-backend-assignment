@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: finance-backend-assignment
+    env: node
+    plan: free
+    buildCommand: npm ci && npm run prisma:generate && npm run build
+    startCommand: npm run prisma:migrate:deploy && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: DATABASE_URL
+        value: file:/var/data/dev.db
+      - key: PUBLIC_API_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+    disk:
+      name: finance-data
+      mountPath: /var/data
+      sizeGB: 1

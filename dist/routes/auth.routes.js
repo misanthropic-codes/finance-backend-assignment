@@ -29,7 +29,7 @@ exports.authRouter.post("/login", (0, validate_1.validate)(auth_schemas_1.loginS
         }
         const jwtOptions = {
             subject: user.id,
-            expiresIn: config_1.config.JWT_EXPIRES_IN
+            expiresIn: config_1.config.JWT_EXPIRES_IN,
         };
         const token = jsonwebtoken_1.default.sign({ role: user.role }, config_1.config.JWT_SECRET, jwtOptions);
         res.json({
@@ -39,8 +39,8 @@ exports.authRouter.post("/login", (0, validate_1.validate)(auth_schemas_1.loginS
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                status: user.status
-            }
+                status: user.status,
+            },
         });
     }
     catch (error) {
