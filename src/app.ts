@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/api/docs.json", (_req, res) => {
-	res.json(openApiSpec);
+  res.json(openApiSpec);
 });
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
