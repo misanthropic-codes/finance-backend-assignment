@@ -1,0 +1,717 @@
+{
+  "info": {
+    "_postman_id": "0dc4e8d3-4b5a-4de1-9b1f-3b8aa1d9aa11",
+    "name": "Finance Backend RBAC Auto Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Automated Postman collection for Finance Backend RBAC matrix coverage. Run in order using Collection Runner."
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('runId')) {",
+          "  pm.collectionVariables.set('runId', String(Date.now()));",
+          "}",
+          "if (!pm.collectionVariables.get('createUserEmail')) {",
+          "  pm.collectionVariables.set('createUserEmail', `postman-user-${pm.collectionVariables.get('runId')}@example.com`);",
+          "}",
+          "if (!pm.collectionVariables.get('recordCategory')) {",
+          "  pm.collectionVariables.set('recordCategory', `Postman-${pm.collectionVariables.get('runId')}`);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Setup",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Health payload has status ok', function () {",
+                  "  pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('tokenAdmin', body.token);",
+                  "pm.collectionVariables.set('adminUserId', body.user.id);",
+                  "pm.test('Admin token captured', function () {",
+                  "  pm.expect(pm.collectionVariables.get('tokenAdmin')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Analyst",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{analystEmail}}\",\n  \"password\": \"{{analystPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Analyst login is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('tokenAnalyst', body.token);",
+                  "pm.test('Analyst token captured', function () {",
+                  "  pm.expect(pm.collectionVariables.get('tokenAnalyst')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Viewer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{viewerEmail}}\",\n  \"password\": \"{{viewerPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Viewer login is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('tokenViewer', body.token);",
+                  "pm.test('Viewer token captured', function () {",
+                  "  pm.expect(pm.collectionVariables.get('tokenViewer')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 Records RBAC",
+      "item": [
+        {
+          "name": "Records Read Admin Allowed",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records?page=1&pageSize=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "5" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can read records', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Records Read Analyst Allowed",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records?page=1&pageSize=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "5" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst can read records', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Records Read Viewer Allowed",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records?page=1&pageSize=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "5" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer can read records', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Records Create Analyst Forbidden",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 250,\n  \"type\": \"EXPENSE\",\n  \"category\": \"{{recordCategory}}\",\n  \"date\": \"2026-04-01T00:00:00.000Z\",\n  \"notes\": \"Postman analyst create should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot create records', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Records Create Viewer Forbidden",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 260,\n  \"type\": \"EXPENSE\",\n  \"category\": \"{{recordCategory}}\",\n  \"date\": \"2026-04-01T00:00:00.000Z\",\n  \"notes\": \"Postman viewer create should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot create records', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Records Create Admin Allowed",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 299,\n  \"type\": \"EXPENSE\",\n  \"category\": \"{{recordCategory}}\",\n  \"date\": \"2026-04-01T00:00:00.000Z\",\n  \"notes\": \"Postman admin create should pass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin can create records', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('createdRecordId', body.data.id);",
+                  "pm.test('Created record id captured', function () {",
+                  "  pm.expect(pm.collectionVariables.get('createdRecordId')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Records Update Analyst Forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Analyst update should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{createdRecordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{createdRecordId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot update records', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Records Update Viewer Forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Viewer update should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{createdRecordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{createdRecordId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot update records', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Records Update Admin Allowed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Admin update should pass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{createdRecordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{createdRecordId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can update records', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Records Delete Analyst Forbidden",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{createdRecordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{createdRecordId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot delete records', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Records Delete Viewer Forbidden",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{createdRecordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{createdRecordId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot delete records', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Records Delete Admin Allowed",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{createdRecordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{createdRecordId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can delete records', function () { pm.response.to.have.status(204); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "02 Dashboard RBAC",
+      "item": [
+        {
+          "name": "Dashboard Summary Admin Allowed",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "summary"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can read dashboard summary', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Dashboard Summary Analyst Allowed",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "summary"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst can read dashboard summary', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Dashboard Summary Viewer Allowed",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenViewer}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "summary"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer can read dashboard summary', function () { pm.response.to.have.status(200); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 Users RBAC",
+      "item": [
+        {
+          "name": "Users List Analyst Forbidden",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot list users', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users List Viewer Forbidden",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenViewer}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot list users', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users List Admin Allowed",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can list users', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Users Create Analyst Forbidden",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{createUserEmail}}\",\n  \"password\": \"Created123!\",\n  \"role\": \"VIEWER\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot create users', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users Create Viewer Forbidden",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{createUserEmail}}\",\n  \"password\": \"Created123!\",\n  \"role\": \"VIEWER\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot create users', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users Create Admin Allowed",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{createUserEmail}}\",\n  \"password\": \"Created123!\",\n  \"role\": \"VIEWER\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin can create users', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('targetUserId', body.data.id);",
+                  "pm.test('Created user id captured', function () {",
+                  "  pm.expect(pm.collectionVariables.get('targetUserId')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Users Update Role Analyst Forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ANALYST\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "role"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot update user role', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users Update Role Viewer Forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ANALYST\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "role"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot update user role', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users Update Role Admin Allowed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ANALYST\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "role"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can update user role', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Users Update Status Analyst Forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAnalyst}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "status"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Analyst cannot update user status', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users Update Status Viewer Forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenViewer}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "status"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Viewer cannot update user status', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "Users Update Status Admin Allowed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "status"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can update user status', function () { pm.response.to.have.status(200); });"] } }]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "runId", "value": "" },
+    { "key": "createUserEmail", "value": "" },
+    { "key": "recordCategory", "value": "" },
+    { "key": "tokenAdmin", "value": "" },
+    { "key": "tokenAnalyst", "value": "" },
+    { "key": "tokenViewer", "value": "" },
+    { "key": "createdRecordId", "value": "" },
+    { "key": "targetUserId", "value": "" },
+    { "key": "adminUserId", "value": "" }
+  ]
+}
