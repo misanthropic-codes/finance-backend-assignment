@@ -10,7 +10,8 @@ import { openApiSpec } from "./docs/openapi";
 
 export const app = express();
 
-app.use(helmet());
+// Disable CSP for API-only app so Swagger UI assets/scripts can render correctly.
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
@@ -18,7 +19,22 @@ app.use(morgan("dev"));
 app.get("/api/docs.json", (_req, res) => {
   res.json(openApiSpec);
 });
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(openApiSpec, {
+    explorer: true,
+    customSiteTitle: "Finance Backend API Docs",
+    swaggerOptions: {
+      url: "/api/docs.json",
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      docExpansion: "list",
+      filter: true,
+      tryItOutEnabled: true,
+    },
+  }),
+);
 
 app.use("/api", apiRouter);
 app.use(notFound);

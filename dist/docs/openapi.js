@@ -214,7 +214,12 @@ exports.openApiSpec = {
                         items: { $ref: "#/components/schemas/Record" },
                     },
                 },
-                required: ["totals", "categoryTotals", "monthlyTrends", "recentActivity"],
+                required: [
+                    "totals",
+                    "categoryTotals",
+                    "monthlyTrends",
+                    "recentActivity",
+                ],
             },
         },
     },
@@ -586,7 +591,9 @@ exports.openApiSpec = {
                         description: "Dashboard summary fetched",
                         content: {
                             "application/json": {
-                                schema: { $ref: "#/components/schemas/DashboardSummaryResponse" },
+                                schema: {
+                                    $ref: "#/components/schemas/DashboardSummaryResponse",
+                                },
                             },
                         },
                     },
